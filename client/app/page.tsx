@@ -1,31 +1,54 @@
 'use client';
 
-import WeatherIcon from './components/WeatherIcon';
-import { UnitType } from './types/weather';
+import { useWeatherData } from './hooks/useWeatherData';
+import SearchBar from './components/SearchBar';
+import CurrentWeather from './components/CurrentWeather';
+import Forecast from './components/Forecast';
+import WeatherDetails from './components/WeatherDetails';
+import UnitToggle from './components/UnitToggle';
+import BatteryStatus from './components/BatteryStatus';
+import Image from 'next/image';
+// import PawaITLogo from '../../assets/logos/pawa-it-logo.png';
 
-interface CurrentWeatherProps {
-  data: {
-    temp: number;
-    description: string;
-    icon: string;
-    date: string;
-    location: string;
-  };
-  unit: UnitType;
-}
-
-export default function CurrentWeather({ data, unit }: CurrentWeatherProps) {
-  const displayTemp = unit === 'celsius' 
-    ? `${Math.round(data.temp)}°C` 
-    : `${Math.round(data.temp * 9/5 + 32)}°F`;
+export default function Home() {
+  const { weather, unit, loading, error, fetchWeather, toggleUnit } = useWeatherData();
 
   return (
-    <div className="flex flex-col items-center text-center">
-      <WeatherIcon code={data.icon} size="xl" />
-      <h1 className="text-6xl font-bold my-2">{displayTemp}</h1>
-      <p className="text-xl text-blue-100 capitalize">{data.description}</p>
-      <p className="text-blue-200 mt-4">{data.date}</p>
-      <p className="text-2xl font-semibold mt-2">{data.location}</p>
-    </div>
+    <main className="min-h-screen p-4 md:p-8 max-w-6xl mx-auto">
+      <div className="flex justify-between items-center mb-6">
+        <Image 
+          src="https://pawait.africa/wp-content/uploads/2024/08/full-logo.png"
+          alt="Pawa IT Logo"
+          width={120}
+          height={40}
+          className="h-10 w-auto"
+        />
+        <div className="flex items-center gap-4">
+          <BatteryStatus level={75} />
+          <UnitToggle unit={unit} onToggle={toggleUnit} />
+        </div>
+      </div>
+
+      <div className="bg-gradient-to-br from-blue-800/80 to-purple-900/80 rounded-3xl p-6 shadow-xl backdrop-blur-sm">
+        <SearchBar onSearch={fetchWeather} />
+        
+        {loading && <div className="text-center py-12">Loading weather data...</div>}
+        {error && <div className="text-red-300 text-center py-12">{error}</div>}
+        
+        {weather && (
+          <div className="mt-6 space-y-8">
+            <CurrentWeather data={weather.current} unit={unit} />
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <WeatherDetails 
+                wind={weather.current.wind} 
+                humidity={weather.current.humidity} 
+              />
+              <Forecast items={weather.forecast} unit={unit} />
+            </div>
+          </div>
+        )}
+      </div>
+    </main>
   );
 }
